@@ -28,7 +28,6 @@ class ServerHandler(socketserver.BaseRequestHandler):
     def handle(self):
         #接收验证消息
         while True:
-            print(1)
             data = self.request.recv(1024).strip()  #接收
             data = json.loads(data.decode('utf-8'))  #将数据变成json字符串来传输
             '''
@@ -138,7 +137,6 @@ class ServerHandler(socketserver.BaseRequestHandler):
 
         f.close()
 
-
     #文件交互——存放文件
     def put(self,**data):
         print('data:',data)  #打印传来的文件相关信息,是一个字典
@@ -202,7 +200,28 @@ class ServerHandler(socketserver.BaseRequestHandler):
         if not len(file_list):
             file_str="<空文件夹！>"
         self.request.sendall(file_str.encode('utf-8'))
-        
+
+    def lsall(self, **data):  #因为传入的是一个字典，所以用**data
+        nl = []
+        allfilelist = []
+        allfilelist_rel = []
+        basepath = data.get('basepath')
+        basepath = os.path.join(self.mainPath, basepath)
+        file_list = os.listdir(basepath)  #查看传入的登陆用户路径下的所有文件
+        for file in file_list:
+            nl.append(os.path.join(basepath, file))
+        for file in nl:
+            allfilelist.append(file)
+            if os.path.isdir(file):
+                for f in os.listdir(file):
+                    nl.append(os.path.join(file, f))
+        del_str = self.mainPath + '\\'
+        for file in allfilelist:
+            allfilelist_rel.append(file.replace(del_str, ''))
+        dic = {}
+        dic['index'] = allfilelist_rel
+        self.request.sendall(json.dumps(dic).encode('utf-8'))  # 文件存在但不完全的状态码
+
 
     #cd切换路径
     def cd(self,**data):
@@ -214,11 +233,8 @@ class ServerHandler(socketserver.BaseRequestHandler):
             self.mainPath = os.path.join(self.mainPath,dirname)
         self.request.sendall(self.mainPath.encode('utf-8'))
 
-
-
     #mkdir创建目录
     def mkdir(self,**data):
-        print(2)
         dirname = data.get('dirname')
         path = os.path.join(self.mainPath,dirname)  #拼接路径（成绝对路径）
         if not os.path.exists(path):  #如果文件夹存在的话

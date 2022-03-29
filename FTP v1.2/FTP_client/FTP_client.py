@@ -58,7 +58,6 @@ class ClientHandler():
         self.sock = socket.socket()  #创建socket对象
         self.sock.connect((self.options.server,int(self.options.port)))  #连接IP和端口
 
-
     #交互
     def interactive(self):
         print('正在开始进入交互......')
@@ -70,18 +69,16 @@ class ClientHandler():
                 cmd_list = cmd_info.split()  #放到命令清单里面
                 #判断是否在定义的命令里面
                 if hasattr(self,cmd_list[0]):
-                    func = getattr(self,cmd_list[0])
-                    if cmd_list[0] == 'put':
-                        action, local_path, target_path = cmd_list  # 分别存放操作名，文件名，目标路径名
-                        func(action, local_path, target_path)
-                    elif cmd_list[0] == 'putDir':
-                        action, local_path, target_path = cmd_list  # 分别存放操作名，文件名，目标路径名
-                        func(action, local_path, target_path)
-                    else:
-                        func(*cmd_list)  #执行命令,传入的是个元组
+                    func = getattr(self, cmd_list[0])
+                    func(*cmd_list)  #执行命令,传入的是个元组
+                else:
+                    print('不存在该命令，现有get, getdir, put, putdir, ls, lsall, cd, mkdir')
 
     # Download
     def get(self, *cmd_list):  # 传入的是个元组
+        if len(cmd_list) != 4:
+            print('错误命令，应为: get target_path file_name local_path')
+            return
         action, target_path, file_name, local_path = cmd_list  #分别存放操作名，文件名，目标路径名
         if target_path == '.':
             target_path = ''
@@ -152,12 +149,38 @@ class ClientHandler():
         f.close()
         print('完毕！')
 
+    def getdir(self, *cmd_list):
+        if len(cmd_list)!= 3:
+            print('错误命令，应为: getDir target_path local_path')
+            return
+        action, target_path, local_path = cmd_list
+        dirname = os.path.basename(target_path)
+        dirpath = os.path.join(local_path, dirname)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+        cmd_l = ['lsall', target_path]
+        file_list = self.lsall(*cmd_l)
+        print('file_list:{}'.format(file_list))
+        for file in file_list:
+            name = os.path.basename(file)
+            if '.' in name:
+                c_list = ['get', os.path.dirname(file), name, os.path.join(local_path, os.path.dirname(file))]
+                self.get(*c_list)
+            else:
+                dirpath = os.path.join(local_path, file)
+                if not os.path.exists(dirpath):
+                    os.makedirs(dirpath)
+                else:
+                    pass
 
-
+        print("下载完毕！")
 
     # Upload
-    def put(self, action, local_path, target_path):  #传入的是个元组
-        # action,local_path,target_path = cmd_list  #分别存放操作名，文件名，目标路径名
+    def put(self, *cmd_list):  #传入的是个元组
+        if len(cmd_list)!= 3:
+            print('错误命令，应为: put local_path target_path')
+            return
+        action, local_path, target_path = cmd_list  #分别存放操作名，文件名，目标路径名
         if target_path == '.':
             target_path = ''
         #把绝对路径与相对路径拼接，组成本地路径的绝对路径
@@ -173,7 +196,7 @@ class ClientHandler():
             'file_size':file_size,
             'target_path':target_path
         }
-
+        print(data)
         self.sock.send(json.dumps(data).encode('utf-8'))  #发送输入的文件信息给服务端
 
         #接收客户端判断文件是否存在的回应
@@ -209,7 +232,7 @@ class ClientHandler():
             pass
 
         #读取文件
-        f = open(local_path,'rb')
+        f = open(local_path, 'rb')
         f.seek(has_sent)
         #定位光标到已经发送的部分的尾部，再用while传给客户端剩下需要写入的部分
         while has_sent<file_size:
@@ -224,7 +247,12 @@ class ClientHandler():
         
         print("完毕！")
 
-    def putDir(self, action, local_dir, target_path):
+    # Upload Dir
+    def putdir(self, *cmd_list):
+        if len(cmd_list)!= 3:
+            print('错误命令，应为: putdir local_dir target_path')
+            return
+        action, local_dir, target_path = cmd_list
         # 递归
         if target_path == '.':
             target_path = ''
@@ -237,11 +265,13 @@ class ClientHandler():
         for file in os.listdir(local_dir):
             src = os.path.join(local_dir, file)
             if os.path.isfile(src):
-                self.put('put', src, src_target)
+                cmd_l = ['put', src, src_target]
+                self.put(*cmd_l)
                 time.sleep(0.1)
             elif os.path.isdir(src):
                 try:
-                    self.putDir('putDir', src, target_path)
+                    cmd_l = ['putdir', src, target_path]
+                    self.putdir(*cmd_l)
                 except:
                     return
 
@@ -251,6 +281,18 @@ class ClientHandler():
         rate_num = int(rate*100)  #将进度百分比乘100
         sys.stdout.write("%s%% %s\r" %(rate_num,"#"*rate_num))
 
+    def lsall(self, *cmd_list):
+        action, basepath = cmd_list
+        data = {
+            "action": "lsall",
+            "basepath": basepath
+        }
+        self.sock.send(json.dumps(data).encode('utf-8'))  # 传输指令
+        data = self.sock.recv(1024).strip()  # 接收结果
+        data = json.loads(data.decode('utf-8'))
+        print(data.get('index'))
+        return data.get('index')
+
     # ls查看文件夹内的文件
     def ls(self,*cmd_list):
         data = {
@@ -259,7 +301,6 @@ class ClientHandler():
         self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
         data = self.sock.recv(1024).decode('utf-8')  #接收结果
         print('当前目录下的文件有：',data)
-
 
     #cd切换文件夹功能
     def cd(self,*cmd_list):
@@ -273,7 +314,6 @@ class ClientHandler():
         #让前标不是家目录，而是cd过后的那个目录
         self.current_dir = os.path.basename(data)
 
-
     #创建文件mkdir功能
     def mkdir(self,*cmd_list):
         data = {
@@ -282,9 +322,7 @@ class ClientHandler():
             }
         self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
         data = self.sock.recv(1024).decode('utf-8')  #接收结果
-        print(data)
 
-        
     #登陆验证
     def authenticate(self):
         if self.options.username is None or self.options.password is None:
