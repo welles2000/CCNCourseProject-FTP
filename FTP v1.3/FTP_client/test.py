@@ -4,6 +4,7 @@ import configparser  #做记录用的模块，用来做文件处理
 import json
 import zipfile
 import os,sys
+import struct
 
 # 压缩解压
 # startdir = '1'  #要压缩的文件夹路径
@@ -81,8 +82,36 @@ import os,sys
 # print(str)
 # print(str.replace('\\',' '))
 
+data = {
+    'name': 'name',
+    'size': 12124124125125125235123513512587889348920897482384723
+}
+header_json = json.dumps(data).encode('utf-8')
+
+print(len('1'.encode('utf-8')))
+
+# str = str.encode('utf-8')
+# header = struct.pack('i', len(header_json))
+# header_size = struct.unpack('i', header)[0]
+#
+# print(header_size)
 
 
 ################# getDir images .
+def isexist_s(self, abs_path):
+    if not os.path.exists(abs_path):
+        print('路径不存在')
+        self.sock.send('0'.encode('utf-8'))
+        return
+    else:
+        self.sock.send('1'.encode('utf-8'))
 
+
+def isexist_r(self):
+    flag = self.sock.recv(1).decode('utf-8')
+    if flag == '0':
+        print('路径不存在')
+        return
+    else:
+        pass
 

@@ -4,6 +4,7 @@ import configparser  #做记录用的模块，用来做文件处理
 import json
 import zipfile
 import os,sys
+import struct
 import time
 
 #存放状态码的大字典
@@ -42,8 +43,36 @@ class ClientHandler():
         self.make_connection()  #开始连接服务端
         self.mainPath = os.path.dirname(os.path.abspath(__file__))  #存放当前执行文件的绝对路径
 
+    def sendd(self, data):
+        header_json = json.dumps(data).encode('utf-8')
+        self.sock.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+        self.sock.sendall(header_json)
+
+    def recvd(self):
+        obj = self.sock.recv(4)
+        header_size = struct.unpack('i', obj)[0]
+        file_info = self.sock.recv(header_size).strip()  # 接收
+        file_info = json.loads(file_info.decode('utf-8'))  # 将数据变成json字符串来传输
+        return file_info
+
+    # def isexist_s(self, abs_path):
+    #     if not os.path.exists(abs_path):
+    #         print('路径不存在')
+    #         self.sock.send('0'.encode('utf-8'))
+    #         return
+    #     else:
+    #         self.sock.send('1'.encode('utf-8'))
+    #
+    # def isexist_r(self):
+    #     flag = self.sock.recv(1).decode('utf-8')
+    #     if flag == '0':
+    #         print('路径不存在')
+    #         return
+    #     else:
+    #         pass
+
     #校验参数
-    def verify_args(self,options,args):
+    def verify_args(self, options, args):
         server = options.server  #取4个解析结果
         port = options.port
         #username = options.username
@@ -90,17 +119,40 @@ class ClientHandler():
             'file_name': file_name,
             'target_path': target_path
         }
-        self.sock.sendall(json.dumps(data_send).encode('utf-8'))  # 发送输入的文件信息给服务端
+        # header_json = json.dumps(data_send).encode('utf-8')
+        # self.sock.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+        # self.sock.sendall(header_json)
+        self.sendd(data_send)
+
+        flag = self.sock.recv(1).decode('utf-8')
+        if flag == '0':
+            print('target_path路径不存在')
+            return
+        else:
+            pass
+
+        # obj = self.sock.recv(4)
+        # header_size = struct.unpack('i', obj)[0]
+        # file_info = self.sock.recv(header_size).strip()  # 接收
+        # file_info = json.loads(file_info.decode('utf-8'))  # 将数据变成json字符串来传输
+        file_info = self.recvd()
 
 
-        file_info = self.sock.recv(1024).strip()  # 接收
-        file_info = json.loads(file_info.decode('utf-8'))  # 将数据变成json字符串来传输
+
         print(file_info)
 
         file_name = file_info.get('file_name')
         file_size = file_info.get('file_size')
 
         abs_path = os.path.join(self.mainPath, local_path, file_name)
+
+        if not os.path.exists(abs_path):
+            self.sock.sendall('0'.encode('utf-8'))
+            print('local_path路径不存在')
+            return
+        else:
+            self.sock.sendall('1'.encode('utf-8'))
+
         has_received = 0
 
         if os.path.exists(abs_path):  # 判断文件是否存在,已存在就考虑要不要断点续传
@@ -111,7 +163,14 @@ class ClientHandler():
                 if choice == 'Y' or 'y':
                     self.sock.sendall('Y'.encode('utf-8'))  # 接收用户是否续传的指令
                     has_received += file_has_size  # 将已经存在的部分加到以接收变量中
-                    self.sock.sendall(str(file_has_size).encode('utf-8'))  # 把已经存在的部分发给客户端
+                    data_has_size = {
+                        'file_has_size': file_has_size
+                    }
+                    # header_json = json.dumps(data_has_size).encode('utf-8')
+                    # self.sock.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+                    # self.sock.sendall(header_json)
+                    self.sendd(data_has_size)
+
                     f = open(abs_path, 'ab')  # 以追加的方式打开
 
                 else:
@@ -138,20 +197,20 @@ class ClientHandler():
         while has_received < file_size:
             # 做一异常处理，根据系统不同值有可能会为空
             try:
-                data = self.sock.recv(1024)
+                data = self.sock.recv(file_size - has_received)
             except Exception as e:
                 break
                 # 如果捕捉到空，就跳出循环,这样就算客户端终止了，服务端也不会报错，会正常运行
             f.write(data)
             has_received += len(data)
-            self.show_progress(has_received, file_size)
+            # self.show_progress(has_received, file_size)
 
         f.close()
         print('完毕！')
 
     def getdir(self, *cmd_list):
         if len(cmd_list)!= 3:
-            print('错误命令，应为: getDir target_path local_path')
+            print('错误命令，应为: getdir target_path local_path')
             return
         action, target_path, local_path = cmd_list
         dirname = os.path.basename(target_path)
@@ -173,7 +232,7 @@ class ClientHandler():
                 else:
                     pass
 
-        print("下载完毕！")
+        print("文件夹下载完毕！")
 
     # Upload
     def put(self, *cmd_list):  #传入的是个元组
@@ -186,8 +245,13 @@ class ClientHandler():
         #把绝对路径与相对路径拼接，组成本地路径的绝对路径
         local_path = os.path.join(self.mainPath,local_path)
 
+
+
         file_name = os.path.basename(local_path)  #获取目录下的文件名
-        file_size = os.stat(local_path).st_size  #获取文件大小
+        if os.path.exists(local_path):
+            file_size = os.stat(local_path).st_size  #获取文件大小
+        else:
+            file_size = 0
 
         #打包信息
         data={
@@ -197,10 +261,25 @@ class ClientHandler():
             'target_path':target_path
         }
         print(data)
-        self.sock.send(json.dumps(data).encode('utf-8'))  #发送输入的文件信息给服务端
+        # self.sock.send(json.dumps(data).encode('utf-8'))  #发送输入的文件信息给服务端
+        self.sendd(data)
+
+        if not os.path.exists(local_path):
+            print('local_path路径不存在')
+            self.sock.send('0'.encode('utf-8'))
+            return
+        else:
+            self.sock.send('1'.encode('utf-8'))
+
+        flag = self.sock.recv(1).decode('utf-8')
+        if flag == '0':
+            print('target_path路径不存在')
+            return
+        else:
+            pass
 
         #接收客户端判断文件是否存在的回应
-        is_exist = self.sock.recv(1024).decode('utf-8')
+        is_exist = self.sock.recv(3).decode('utf-8')
 
         has_sent = 0  #记录光标位置
         if is_exist == '800':
@@ -210,7 +289,8 @@ class ClientHandler():
                 # self.sock.sendall('Y'.decode('utf-8'))
                 self.sock.sendall('Y'.encode('utf-8'))
                 #记录存在的位置
-                continue_position = self.sock.recv(1024).decode('utf-8')  #接收已经存在的部分的长度
+                continue_position = self.recvd().get('file_has_size')
+                # continue_position = self.sock.recv(1024).decode('utf-8')  #接收已经存在的部分的长度
                 has_sent += int(continue_position)  #加到已经发送的文件
                 
             else:
@@ -235,8 +315,8 @@ class ClientHandler():
         f = open(local_path, 'rb')
         f.seek(has_sent)
         #定位光标到已经发送的部分的尾部，再用while传给客户端剩下需要写入的部分
-        while has_sent<file_size:
-            data = f.read(1024)
+        while has_sent < file_size:
+            data = f.read(file_size - has_sent)
             self.sock.sendall(data)
             has_sent += len(data)
             #传输过程中调用进度条显示,传入已经接受的大小和完整文件大小
@@ -245,7 +325,7 @@ class ClientHandler():
             
         f.close()
         
-        print("完毕！")
+        print("文件上传完毕！")
 
     # Upload Dir
     def putdir(self, *cmd_list):
@@ -261,13 +341,13 @@ class ClientHandler():
         src_target = os.path.join(target_path, local_dir)
         cmd_list = [src_target]
         self.mkdir(self, *cmd_list)
-        time.sleep(0.1)
+        # time.sleep(0.1)
         for file in os.listdir(local_dir):
             src = os.path.join(local_dir, file)
             if os.path.isfile(src):
                 cmd_l = ['put', src, src_target]
                 self.put(*cmd_l)
-                time.sleep(0.1)
+                # time.sleep(0.1)
             elif os.path.isdir(src):
                 try:
                     cmd_l = ['putdir', src, target_path]
@@ -287,9 +367,17 @@ class ClientHandler():
             "action": "lsall",
             "basepath": basepath
         }
-        self.sock.send(json.dumps(data).encode('utf-8'))  # 传输指令
-        data = self.sock.recv(1024).strip()  # 接收结果
-        data = json.loads(data.decode('utf-8'))
+        # header_json = json.dumps(data).encode('utf-8')
+        # self.sock.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+        # self.sock.sendall(header_json)
+        self.sendd(data)
+
+        # obj = self.sock.recv(4)
+        # header_size = struct.unpack('i', obj)[0]
+        # data = self.sock.recv(header_size).strip()  # 接收
+        # data = json.loads(data.decode('utf-8'))  # 将数据变成json字符串来传输
+        data = self.recvd()
+
         print(data.get('index'))
         return data.get('index')
 
@@ -298,8 +386,10 @@ class ClientHandler():
         data = {
             "action":"ls"
             }
-        self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
-        data = self.sock.recv(1024).decode('utf-8')  #接收结果
+        # self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
+        self.sendd(data)
+        # data = self.sock.recv(1024).decode('utf-8')  #接收结果
+        data = self.recvd().get('file_str_dic')
         print('当前目录下的文件有：',data)
 
     #cd切换文件夹功能
@@ -308,8 +398,11 @@ class ClientHandler():
             "action":"cd",
             "dirname":cmd_list[1]  #输入的是一个列表，取列表的第2个元素，用下标1
             }
-        self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
-        data = self.sock.recv(1024).decode('utf-8')  #接收结果
+        # self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
+        self.sendd(data)
+        data = self.recvd().get('mainPath')
+        # data = self.sock.recv(1024).decode('utf-8')  #接收结果
+
         print('当前所在目录：',os.path.basename(data))  #传来的是所在的绝对路径，basename取得最后一级的路径
         #让前标不是家目录，而是cd过后的那个目录
         self.current_dir = os.path.basename(data)
@@ -320,8 +413,10 @@ class ClientHandler():
             "action":"mkdir",
             "dirname":cmd_list[1]
             }
-        self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
-        data = self.sock.recv(1024).decode('utf-8')  #接收结果
+        self.sendd(data)
+        # self.sock.send(json.dumps(data).encode('utf-8'))  #传输指令
+        data = self.sock.recv(21).decode('utf-8')  #接收结果
+        print(data)
 
     #登陆验证
     def authenticate(self):
@@ -335,8 +430,9 @@ class ClientHandler():
 
     #处理服务端的回应信息
     def response(self):
-        data = self.sock.recv(1024).decode('utf-8')  #接收信息
-        data = json.loads(data)  #将json字符串解码
+        data = self.recvd()
+        # data = self.sock.recv(1024).decode('utf-8')  #接收信息
+        # data = json.loads(data)  #将json字符串解码
         return data  #返回处理后的信息
 
     #获取回应信息
@@ -347,7 +443,11 @@ class ClientHandler():
                 'username':user,
                 'password':pwd
             }
-        self.sock.send(json.dumps(data).encode('utf-8'))  #发送账号密码给服务端
+        # header_json = json.dumps(data).encode('utf-8')
+        # self.sock.send(struct.pack('i', len(header_json)))  #发送账号密码给服务端
+        # self.sock.sendall(header_json)
+        self.sendd(data)
+
         response = self.response()
         print('状态码:',response['status_code'])
 

@@ -1,6 +1,8 @@
 import socketserver
 import json
 import configparser  #引入配置模块
+import struct
+
 from conf import settings
 import os
 
@@ -28,8 +30,11 @@ class ServerHandler(socketserver.BaseRequestHandler):
     def handle(self):
         #接收验证消息
         while True:
-            data = self.request.recv(1024).strip()  #接收
-            data = json.loads(data.decode('utf-8'))  #将数据变成json字符串来传输
+            data = self.recvd()
+            # obj = self.request.recv(4)
+            # header_size = struct.unpack('i', obj)[0]
+            # data = self.request.recv(header_size).strip()  #接收
+            # data = json.loads(data.decode('utf-8'))  #将数据变成json字符串来传输
             '''
                 {
                     'action':'auth',
@@ -48,12 +53,24 @@ class ServerHandler(socketserver.BaseRequestHandler):
             else:
                 print('你的action没有内容！')
 
+    def sendd(self, data):
+        header_json = json.dumps(data).encode('utf-8')
+        self.request.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+        self.request.sendall(header_json)
+
+    def recvd(self):
+        obj = self.request.recv(4)
+        header_size = struct.unpack('i', obj)[0]
+        file_info = self.request.recv(header_size).strip()  # 接收
+        file_info = json.loads(file_info.decode('utf-8'))  # 将数据变成json字符串来传输
+        return file_info
 
     #给客户端返回信息
     def send_response(self,state_code):
         response={'status_code':state_code}  #存放状态码
 
-        self.request.sendall(json.dumps(response).encode('utf-8'))  #发送一个存状态码的键值对
+        # self.request.sendall(json.dumps(response).encode('utf-8'))  #发送一个存状态码的键值对
+        self.sendd(response)
     
     #登陆验证
     def auth(self,**data):
@@ -89,6 +106,13 @@ class ServerHandler(socketserver.BaseRequestHandler):
         target_path = data.get('target_path')
         # 拼接成绝对路径
         local_path = os.path.join(self.mainPath, target_path, file_name)
+
+        if not os.path.exists(local_path):
+            self.request.sendall('0'.encode('utf-8'))
+            return
+        else:
+            self.request.sendall('1'.encode('utf-8'))
+
         file_name = os.path.basename(local_path)  # 获取目录下的文件名
         file_size = os.stat(local_path).st_size  # 获取文件大小
 
@@ -97,17 +121,34 @@ class ServerHandler(socketserver.BaseRequestHandler):
             'file_name': file_name,
             'file_size': file_size
         }
-        self.request.sendall(json.dumps(data).encode('utf-8'))
 
-        is_exist = self.request.recv(1024).decode('utf-8')
+        # header_json = json.dumps(data).encode('utf-8')
+        # self.request.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+        # self.request.sendall(header_json)
+        self.sendd(data)
+
+        flag = self.request.recv(1).decode('utf-8')
+        if flag == '0':
+            return
+        else:
+            pass
+
+        is_exist = self.request.recv(3).decode('utf-8')
         has_sent = 0  # 记录已下载的文件的大小
 
         if is_exist == '800':
             # 文件不完整
-            choice = self.request.recv(1024).decode('utf-8')  # 接收用户是否续传的指令
+            choice = self.request.recv(1).decode('utf-8')  # 接收用户是否续传的指令
             if choice == 'Y' or 'y':
                 # 记录存在的位置
-                continue_position = self.request.recv(1024).decode('utf-8')  # 接收已经存在的部分的长度
+                # obj = self.request.recv(4)
+                # header_size = struct.unpack('i', obj)[0]
+                # data = self.request.recv(header_size).strip()  # 接收
+                # data = json.loads(data.decode('utf-8'))  # 将数据变成json字符串来传输
+                data = self.recvd()
+                continue_position = data.get('file_has_size')
+
+                # continue_position = self.request.recv(1024).decode('utf-8')  # 接收已经存在的部分的长度
                 has_sent += int(continue_position)  # 加到已经发送的文件
 
             else:
@@ -115,7 +156,7 @@ class ServerHandler(socketserver.BaseRequestHandler):
 
         elif is_exist == '801':
             # 文件完全存在
-            choice = self.request.recv(1024).decode('utf-8')  #接收用户是否覆盖的指令
+            choice = self.request.recv(1).decode('utf-8')  #接收用户是否覆盖的指令
             if choice == 'Y' or 'y':
                 pass
             else:
@@ -131,7 +172,7 @@ class ServerHandler(socketserver.BaseRequestHandler):
         f.seek(has_sent)
         # 定位光标到已经发送的部分的尾部，再用while传给客户端剩下需要写入的部分
         while has_sent < file_size:
-            data = f.read(1024)
+            data = f.read(file_size - has_sent)
             self.request.sendall(data)
             has_sent += len(data)
 
@@ -144,8 +185,20 @@ class ServerHandler(socketserver.BaseRequestHandler):
         file_name = data.get('file_name')
         file_size = data.get('file_size')
         target_path = data.get('target_path')
+
+        flag = self.request.recv(1).decode('utf-8')
+        if flag == '0':
+            return
+        else:
+            pass
         #拼接成绝对路径
         abs_path = os.path.join(self.mainPath,target_path,file_name)
+
+        if not os.path.exists(abs_path):
+            self.request.send('0'.encode('utf-8'))
+            return
+        else:
+            self.request.send('1'.encode('utf-8'))
 
 
         has_received = 0  #记录已上传的文件的大小
@@ -155,9 +208,13 @@ class ServerHandler(socketserver.BaseRequestHandler):
             file_has_size = os.stat(abs_path).st_size  #获取已经存在文件的大小
             if file_has_size<file_size:  #已存在小于原文件大小，说明需要断点续传
                 self.request.sendall('800'.encode('utf-8'))  #文件存在但不完全的状态码
-                choice = self.request.recv(1024).decode('utf-8')  #接收用户是否续传的指令
+                choice = self.request.recv(1).decode('utf-8')  #接收用户是否续传的指令
                 if choice == 'Y':
-                    self.request.sendall(str(file_has_size).encode('utf-8'))  #把已经存在的部分发给客户端
+                    data = {
+                        'file_has_size': file_has_size
+                    }
+                    # self.request.sendall(str(file_has_size).encode('utf-8'))  #把已经存在的部分发给客户端
+                    self.sendd(data)
                     has_received += file_has_size  #将已经存在的部分加到以接收变量中
                     
 
@@ -168,7 +225,7 @@ class ServerHandler(socketserver.BaseRequestHandler):
                 
             else:  #说明已经存在完整的文件
                 self.request.sendall('801'.encode('utf-8'))  #文件已经存在的状态码
-                choice = self.request.recv(1024).decode('utf-8')  # 接收用户是否续传的指令
+                choice = self.request.recv(1).decode('utf-8')  # 接收用户是否续传的指令
                 if choice == 'N':
                     return  # 并且直接返回，不运行下面写入文件操作
                 else:
@@ -184,7 +241,7 @@ class ServerHandler(socketserver.BaseRequestHandler):
         while has_received < file_size:
             #做一异常处理，根据系统不同值有可能会为空
             try:
-                data = self.request.recv(1024)
+                data = self.request.recv(file_size - has_received)
             except Exception as e:
                 break
                 #如果捕捉到空，就跳出循环,这样就算客户端终止了，服务端也不会报错，会正常运行
@@ -199,7 +256,11 @@ class ServerHandler(socketserver.BaseRequestHandler):
         file_str = '\n'.join(file_list)  #一行一个文件名，拼接字符串，每一个文件用一个换行来连接
         if not len(file_list):
             file_str="<空文件夹！>"
-        self.request.sendall(file_str.encode('utf-8'))
+        file_str_dic = {
+            'file_str_dic': file_str
+        }
+        self.sendd(file_str_dic)
+        # self.request.sendall(file_str.encode('utf-8'))
 
     def lsall(self, **data):  #因为传入的是一个字典，所以用**data
         nl = []
@@ -220,8 +281,11 @@ class ServerHandler(socketserver.BaseRequestHandler):
             allfilelist_rel.append(file.replace(del_str, ''))
         dic = {}
         dic['index'] = allfilelist_rel
-        self.request.sendall(json.dumps(dic).encode('utf-8'))  # 文件存在但不完全的状态码
 
+        # header_json = json.dumps(dic).encode('utf-8')
+        # self.request.sendall(struct.pack('i', len(header_json)))  # 发送输入的文件信息给服务端
+        # self.request.sendall(header_json)
+        self.sendd(dic)
 
     #cd切换路径
     def cd(self,**data):
@@ -231,7 +295,11 @@ class ServerHandler(socketserver.BaseRequestHandler):
         else:
             #进行路径拼接,得到绝对路径
             self.mainPath = os.path.join(self.mainPath,dirname)
-        self.request.sendall(self.mainPath.encode('utf-8'))
+        data = {
+            'mainPath': self.mainPath
+        }
+        # self.request.sendall(self.mainPath.encode('utf-8'))
+        self.sendd(data)
 
     #mkdir创建目录
     def mkdir(self,**data):
