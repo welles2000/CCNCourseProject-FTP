@@ -1,0 +1,38 @@
+
+}python:S1192È"eDefine a constant instead of duplicating this literal "è¯·è¾“å…¥æ­£ç¡®çš„æ–‡ä»¶å¤¹è·¯å¾„ï¼" 3 times.(Ç¢¦m
+opython:S1192Ô"QDefine a constant instead of duplicating this literal 'è¿”å›ä¸Šä¸€çº§' 14 times.(¹åû¹ùÿÿÿÿ
+mpython:S1192M"UDefine a constant instead of duplicating this literal "../../sun-valley.tcl" 4 times.(€åšú
+rpython:S116@"VRename this field "progressbarOne" to match the regular expression ^[_a-z][_a-z0-9]*$.(Š«€ùşÿÿÿÿ
+vpython:S117'"ZRename this parameter "progressbarOne" to match the regular expression ^[_a-z][a-z0-9_]*$.(·¸™òüÿÿÿÿ
+ppython:S107'"MMethod "__init__" has 16 parameters, which is greater than the 13 authorized.(·¸™òüÿÿÿÿ8¢—­®0
+6python:S125o"Remove this commented out code.(‰Ÿİà
+tpython:S117‹"WRename this local variable "newDir" to match the regular expression ^[_a-z][a-z0-9_]*$.(úø¨Íúÿÿÿÿ
+ypython:S1186¤"[Add a nested comment explaining why this function is empty, or complete the implementation.(¡Ëæâÿÿÿÿÿ
+Mpython:S1656°"/Remove or correct this useless self-assignment.(Ã„¿ûùÿÿÿÿ
+7python:S125ü"Remove this commented out code.(úæã»
+<python:S125Š"Remove this commented out code.(Ó˜ğûÿÿÿÿ
+opython:S117¶"WRename this local variable "newDir" to match the regular expression ^[_a-z][a-z0-9_]*$.(æ¢‹Ó
+Upython:S5754á"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+7python:S125Ö"Remove this commented out code.(¼ëóá
+Qpython:S1481"3Remove the unused local variable "win_current_dir".(°…ê¿üÿÿÿÿ
+Ipython:S1481"1Remove the unused local variable "ftp_file_type".(è–„H
+Opython:S1481"1Remove the unused local variable "ftp_file_name".(¬Ôÿøÿÿÿÿ
+7python:S125«"Remove this commented out code.(‚ûÀã
+Apython:S1481Ò"(Remove the unused local variable "file".(ÉÅò¼
+Jpython:S1481Å"1Remove the unused local variable "win_file_name".(ç½¨
+7python:S125Æ"Remove this commented out code.(£ñÓ«
+<python:S125É"Remove this commented out code.(¨ù„Ìüÿÿÿÿ
+7python:S125Ø"Remove this commented out code.(ıÚÈ
+<python:S125ß"Remove this commented out code.(éúÏ®úÿÿÿÿ
+Ipython:S5806ç"+Rename this variable; it shadows a builtin.(çºÍşÿÿÿÿ
+7python:S125í"Remove this commented out code.(ıÚÈ
+<python:S125õ"Remove this commented out code.(éúÏ®úÿÿÿÿ
+Upython:S5754•"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+7python:S125"Remove this commented out code.(¼ëóá
+Upython:S5754Ä"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+7python:S125»"Remove this commented out code.(¼ëóá
+Upython:S5754ÿ"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+epython:S1542ß"LRename function "delAll" to match the regular expression ^[a-z_][a-z0-9_]*$.(¯ å
+7python:S125ø"Remove this commented out code.(¼ëóá
+7python:S125”"Remove this commented out code.(¿‹›½
+7python:S125¥"Remove this commented out code.(Ø

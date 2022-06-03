@@ -1,0 +1,48 @@
+
+lpython:S1192‚"NDefine a constant instead of duplicating this literal 'å‰©ä½™å®¹é‡:' 3 times.(úÉËØıÿÿÿÿ
+gpython:S1192€"NDefine a constant instead of duplicating this literal 'ç©ºé—´å®¹é‡:' 3 times.(ıìÊ
+fpython:S5797ó"HReplace this expression; used as a condition it will always be constant.(ëñßıÿÿÿÿ
+fpython:S5797€"HReplace this expression; used as a condition it will always be constant.(ëñßıÿÿÿÿ
+apython:S5797‚"HReplace this expression; used as a condition it will always be constant.(ĞÎÍÚ
+rpython:S116<"VRename this field "progressbarOne" to match the regular expression ^[_a-z][_a-z0-9]*$.(Š«€ùşÿÿÿÿ
+lpython:S116;"PRename this field "mainPath" to match the regular expression ^[_a-z][_a-z0-9]*$.(«˜…ùıÿÿÿÿ
+vpython:S117,"ZRename this parameter "progressbarOne" to match the regular expression ^[_a-z][a-z0-9_]*$.( Ï¼Ÿøÿÿÿÿ
+6python:S1259"Remove this commented out code.(Üè¯û
+Bpython:S1481_"*Remove the unused local variable "server".(“Ù—ä
+6python:S125a"Remove this commented out code.(Õ³ãÙ
+6python:S125j"Remove this commented out code.(ßÛÑÏ
+Cpython:S1481†"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ
+mpython:S3776Ÿ"TRefactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed.(ô”¿”
+<python:S125¡"Remove this commented out code.(¬·úıÿÿÿÿ
+<python:S125±"Remove this commented out code.(Îã³”ıÿÿÿÿ
+Apython:S108¼")Either remove or fill this block of code.(ã‘Û¾
+7python:S125¾"Remove this commented out code.(áôµ™
+<python:S125Ú"Remove this commented out code.(ŞÄ‚¶ıÿÿÿÿ
+<python:S125â"Remove this commented out code.(ğª« üÿÿÿÿ
+7python:S125ï"Remove this commented out code.(ïÈß
+7python:S125Œ"Remove this commented out code.(ŞÍ¤Ø
+<python:S125˜"Remove this commented out code.(øÖ€éøÿÿÿÿ
+Dpython:S5806­"+Rename this variable; it shadows a builtin.(Ô›Ç
+Apython:S108¶")Either remove or fill this block of code.(ã‘Û¾
+mpython:S3776½"TRefactor this function to reduce its Cognitive Complexity from 24 to the 15 allowed.(ïø³
+<python:S125Â"Remove this commented out code.(øÖ€éøÿÿÿÿ
+Apython:S108ê")Either remove or fill this block of code.(ã‘Û¾
+7python:S125ğ"Remove this commented out code.(¹©´Ş
+qpython:S2159ó"SRemove this equality check between incompatible types; it will always return False.(ëñßıÿÿÿÿ
+<python:S125ø"Remove this commented out code.(¹­é»øÿÿÿÿ
+<python:S125ı"Remove this commented out code.(á‘×ëüÿÿÿÿ
+qpython:S2159€"SRemove this equality check between incompatible types; it will always return False.(ëñßıÿÿÿÿ
+lpython:S2159‚"SRemove this equality check between incompatible types; it will always return False.(ĞÎÍÚ
+Upython:S5754˜"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+<python:S125¯"Remove this commented out code.(×õôÚüÿÿÿÿ
+Upython:S5754Û"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+7python:S125î"Remove this commented out code.(Èâì¬
+7python:S125ô"Remove this commented out code.(ğ˜±»
+7python:S125ù"Remove this commented out code.(áôµ™
+7python:S125‰"Remove this commented out code.(Œ˜ÚŠ
+7python:S125¦"Remove this commented out code.(Œ˜ÚŠ
+6python:S125Ä"Remove this commented out code.(ÀÍÉ7
+7python:S125×"Remove this commented out code.(ğ˜±»
+7python:S125õ"Remove this commented out code.(ğ˜±»
+7python:S125ú"Remove this commented out code.(áôµ™
+7python:S125•"Remove this commented out code.(¥Ãü“

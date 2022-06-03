@@ -1,0 +1,19 @@
+
+cpython:S1192N"FDefine a constant instead of duplicating this literal 'data:' 3 times.(Å¼…âşÿÿÿÿ
+fpython:S5797"HReplace this expression; used as a condition it will always be constant.(ëñßıÿÿÿÿ
+fpython:S5797¡"HReplace this expression; used as a condition it will always be constant.(ëñßıÿÿÿÿ
+;python:S125#"Remove this commented out code.(˜ë¿üÿÿÿÿ
+lpython:S3776g"TRefactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed.(âº¤
+6python:S125~"Remove this commented out code.(ğ˜±»
+Apython:S108‡")Either remove or fill this block of code.(ã‘Û¾
+<python:S125"Remove this commented out code.(÷£«ıÿÿÿÿ
+<python:S125˜"Remove this commented out code.(ÇÁÙ“ûÿÿÿÿ
+Apython:S108¢")Either remove or fill this block of code.(ã‘Û¾
+Cpython:S1481û"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ
+Ipython:S1481÷")Remove the unused local variable "speed".(Ìúß8÷–¯0
+rpython:S3776·"TRefactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.(€û±ıÿÿÿÿ
+Apython:S108Â")Either remove or fill this block of code.(ã‘Û¾
+Ipython:S5806ø"+Rename this variable; it shadows a builtin.(×´Ùùüÿÿÿÿ
+7python:S125¦"Remove this commented out code.(İø¹¾
+Lpython:S1481Ê"3Remove the unused local variable "allfilelist_rel".(–“¦î
+7python:S125á"Remove this commented out code.(İø¹¾
